@@ -27,6 +27,20 @@ mod vector_tests {
         let result = Vector::of((x, y));
 
         // then
-        assert_eq!(result, Vector { x: 1, y: 2, z: 0 });
+        assert_eq!(result, Vector { x, y, z: 0 });
+    }
+
+    #[test]
+    fn of_xyz() {
+        // given
+        let x = 1;
+        let y = 2;
+        let z = 3;
+
+        // when
+        let result = Vector::of((x, y, z));
+
+        // then
+        assert_eq!(result, Vector { x, y, z });
     }
 }
