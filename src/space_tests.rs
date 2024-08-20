@@ -13,42 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub struct Vector {
-    pub x: i32,
-    pub y: i32,
-    pub z: i32,
+use crate::space::Vector;
+
+#[test]
+fn of_xy() {
+    // given
+    let x = 1;
+    let y = 2;
+
+    // when
+    let result = Vector::of((x, y));
+
+    // then
+    assert_eq!(result, Vector { x, y, z: 0 });
 }
 
-pub trait Of {
-    fn of(self) -> Vector;
-}
+#[test]
+fn of_xyz() {
+    // given
+    let x = 1;
+    let y = 2;
+    let z = 3;
 
-impl Vector {
-    pub fn of<A>(args: A) -> Vector
-    where
-        A: Of,
-    {
-        args.of()
-    }
-}
+    // when
+    let result = Vector::of((x, y, z));
 
-impl Of for (i32, i32) {
-    fn of(self) -> Vector {
-        return Vector {
-            x: self.0,
-            y: self.1,
-            z: 0,
-        };
-    }
-}
-
-impl Of for (i32, i32, i32) {
-    fn of(self) -> Vector {
-        return Vector {
-            x: self.0,
-            y: self.1,
-            z: self.2,
-        };
-    }
+    // then
+    assert_eq!(result, Vector { x, y, z });
 }

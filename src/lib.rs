@@ -14,3 +14,6 @@
  * limitations under the License.
  */
 pub mod space;
+
+#[cfg(test)]
+mod space_tests;
