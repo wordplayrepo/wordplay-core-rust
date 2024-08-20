@@ -13,10 +13,75 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use crate::space::Location;
 use crate::space::Vector;
+use rstest::rstest;
+
+// Location start =====
 
 #[test]
-fn of_xy() {
+fn location_at_xy() {
+    // given
+    let x = 1;
+    let y = 2;
+
+    // when
+    let result = Location::at((x, y));
+
+    // then
+    assert_eq!(result.x(), x);
+    assert_eq!(result.y(), y);
+    assert_eq!(result.z(), 0);
+}
+
+#[test]
+fn location_at_xyz() {
+    // given
+    let x = 1;
+    let y = 2;
+    let z = 3;
+
+    // when
+    let result = Location::at((x, y, z));
+
+    // then
+    assert_eq!(result.x(), x);
+    assert_eq!(result.y(), y);
+    assert_eq!(result.z(), z);
+}
+
+#[test]
+fn location_go_positive() {
+    // given
+    let location = Location::at((1, 1, 1));
+    let vector = Vector::of((1, 1, 1));
+
+    // when
+    let result = location.go(&vector);
+
+    // then
+    assert_eq!(result, Location::at((2, 2, 2)));
+}
+
+#[test]
+fn location_go_negative() {
+    // given
+    let location = Location::at((2, 2, 2));
+    let vector = Vector::of((-1, -1, -1));
+
+    // when
+    let result = location.go(&vector);
+
+    // then
+    assert_eq!(result, Location::at((1, 1, 1)));
+}
+
+// Location end =====
+
+// Vector start =====
+
+#[test]
+fn vector_of_xy() {
     // given
     let x = 1;
     let y = 2;
@@ -25,11 +90,13 @@ fn of_xy() {
     let result = Vector::of((x, y));
 
     // then
-    assert_eq!(result, Vector { x, y, z: 0 });
+    assert_eq!(result.x(), x);
+    assert_eq!(result.y(), y);
+    assert_eq!(result.z(), 0);
 }
 
 #[test]
-fn of_xyz() {
+fn vector_of_xyz() {
     // given
     let x = 1;
     let y = 2;
@@ -39,5 +106,39 @@ fn of_xyz() {
     let result = Vector::of((x, y, z));
 
     // then
-    assert_eq!(result, Vector { x, y, z });
+    assert_eq!(result.x(), x);
+    assert_eq!(result.y(), y);
+    assert_eq!(result.z(), z);
 }
+
+#[rstest]
+#[case(1, 1, 1, 2, 1, 1)]
+#[case(1, 1, 1, 1, 2, 1)]
+#[case(1, 1, 1, 1, 1, 2)]
+#[case(2, 1, 1, 1, 1, 1)]
+#[case(1, 2, 1, 1, 1, 1)]
+#[case(1, 1, 2, 1, 1, 1)]
+#[case(-1,-1,-1,1,1,1)]
+fn vector_from(
+    #[case] start_x: i32,
+    #[case] start_y: i32,
+    #[case] start_z: i32,
+    #[case] end_x: i32,
+    #[case] end_y: i32,
+    #[case] end_z: i32,
+) {
+    // given
+    let start = Location::at((start_x, start_y, start_z));
+    let end = Location::at((end_x, end_y, end_z));
+
+    // when
+    let result = Vector::from(&start, &end);
+
+    // then
+    assert_eq!(
+        result,
+        Vector::of((end_x - start_x, end_y - start_y, end_z - start_z))
+    );
+}
+
+// Vector end =====

@@ -13,11 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/// Defines a location in space without concern for what may or may not be at that location.
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct Location {
+    x: i32,
+    y: i32,
+    z: i32,
+}
+
+pub trait At {
+    fn at(self) -> Location;
+}
+
+impl Location {
+    pub fn at<A>(args: A) -> Location
+    where
+        A: At,
+    {
+        args.at()
+    }
+
+    pub fn x(&self) -> i32 {
+        return self.x;
+    }
+
+    pub fn y(&self) -> i32 {
+        return self.y;
+    }
+
+    pub fn z(&self) -> i32 {
+        return self.z;
+    }
+
+    pub fn go(&self, vector: &Vector) -> Location {
+        return Location::at((self.x + vector.x(), self.y + vector.y(), self.z + vector.z()))
+    }
+}
+
+impl At for (i32, i32) {
+    fn at(self) -> Location {
+        return Location {
+            x: self.0,
+            y: self.1,
+            z: 0,
+        };
+    }
+}
+
+impl At for (i32, i32, i32) {
+    fn at(self) -> Location {
+        return Location {
+            x: self.0,
+            y: self.1,
+            z: self.2,
+        };
+    }
+}
+
+/// Defines the separation between two [`Location`] objects.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Vector {
-    pub x: i32,
-    pub y: i32,
-    pub z: i32,
+    x: i32,
+    y: i32,
+    z: i32,
 }
 
 pub trait Of {
@@ -30,6 +88,22 @@ impl Vector {
         A: Of,
     {
         args.of()
+    }
+
+    pub fn x(&self) -> i32 {
+        return self.x;
+    }
+
+    pub fn y(&self) -> i32 {
+        return self.y;
+    }
+
+    pub fn z(&self) -> i32 {
+        return self.z;
+    }
+
+    pub fn from(start: &Location, end: &Location) -> Vector {
+        return Vector::of((end.x() - start.x(), end.y() - start.y(), end.z() - start.z()));
     }
 }
 
