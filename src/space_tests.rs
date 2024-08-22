@@ -199,6 +199,37 @@ fn location_go_negative() {
     assert_eq!(result, Location::at((1, 1, 1)));
 }
 
+#[rstest]
+#[case(1, 1, 1, 3, 3, 3, true)]
+#[case(2, 1, 1, 4, 3, 3, true)]
+#[case(1, 2, 1, 3, 4, 3, true)]
+#[case(1, 1, 2, 3, 3, 4, true)]
+#[case(1, 1, 1, 1, 1, 1, true)]
+#[case(1, 1, 1, 4, 4, 4, false)]
+#[case(1, 1, 1, 4, 3, 3, false)]
+#[case(1, 1, 1, 3, 4, 3, false)]
+#[case(1, 1, 1, 3, 3, 4, false)]
+fn location_is_within(
+    #[case] distance_x: i32,
+    #[case] distance_y: i32,
+    #[case] distance_z: i32,
+    #[case] target_x: i32,
+    #[case] target_y: i32,
+    #[case] target_z: i32,
+    #[case] expected: bool,
+) {
+    // given
+    let start = Location::at((2, 2, 2));
+    let distance = Distance::of((distance_x, distance_y, distance_z));
+    let target = Location::at((target_x, target_y, target_z));
+
+    // when
+    let result = start.is_within(&distance, &target);
+
+    // then
+    assert_eq!(result, expected);
+}
+
 // Location end =====
 
 // Vector start =====

@@ -132,6 +132,16 @@ impl Location {
             self.z + vector.z(),
         ));
     }
+
+    pub fn is_within(&self, distance: &Distance, location: &Location) -> bool {
+        let other_x = location.x();
+        let other_y = location.y();
+        let other_z = location.z();
+
+        return (self.x - other_x).abs() <= distance.x()
+            && (self.y - other_y).abs() <= distance.y()
+            && (self.z - other_z).abs() <= distance.z();
+    }
 }
 
 impl AtLocation for (i32, i32) {
