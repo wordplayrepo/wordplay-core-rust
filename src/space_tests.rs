@@ -101,7 +101,42 @@ fn distance_of_xyz() {
     assert_eq!(result.z(), z);
 }
 
-// TODO finish tests for Distance
+#[rstest]
+#[case(-1,0,0)]
+#[case(0,-1,0)]
+#[case(0,0,-1)]
+fn distance_of_xyz_negative(#[case] x: i32, #[case] y: i32, #[case] z: i32) {
+    // when
+    let result = Distance::of((x, y, z));
+
+    // then
+    assert_eq!(result.x(), x.abs());
+    assert_eq!(result.y(), y.abs());
+    assert_eq!(result.z(), z.abs());
+}
+
+#[rstest]
+#[case(0, 0, 0, true)]
+#[case(1, 0, 0, true)]
+#[case(0, 1, 0, true)]
+#[case(0, 0, 1, true)]
+#[case(0, 1, 1, true)]
+#[case(1, 0, 1, true)]
+#[case(1, 1, 0, true)]
+#[case(1, 1, 1, true)]
+#[case(2, 0, 0, false)]
+#[case(0, 2, 0, false)]
+#[case(0, 0, 2, false)]
+fn distance_is_within(#[case] x: i32, #[case] y: i32, #[case] z: i32, #[case] expected: bool) {
+    // given
+    let distance = Distance::of((x, y, z));
+
+    // when
+    let result = distance.is_within(Distance::of((1, 1, 1)));
+
+    // then
+    assert_eq!(result, expected)
+}
 
 // Distance end =====
 
