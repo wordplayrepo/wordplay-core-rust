@@ -13,6 +13,90 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use std::num::TryFromIntError;
+
+/// Defines a container in two- or three-dimensional space.
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct Dimension {
+    width: u32,
+    height: u32,
+    depth: u32,
+}
+
+pub trait OfDimension {
+    fn of(self) -> Dimension;
+}
+
+impl Dimension {
+    pub fn of<A>(args: A) -> Dimension
+    where
+        A: OfDimension,
+    {
+        args.of()
+    }
+
+    pub fn width(&self) -> u32 {
+        return self.width;
+    }
+
+    pub fn height(&self) -> u32 {
+        return self.height;
+    }
+
+    pub fn depth(&self) -> u32 {
+        return self.depth;
+    }
+
+    pub fn contains(&self, location: &Location) -> bool {
+        let test_x: Result<u32, TryFromIntError> = location.x().try_into();
+        if test_x.is_err() {
+            return false;
+        }
+
+        let test_y: Result<u32, TryFromIntError> = location.y().try_into();
+        if test_y.is_err() {
+            return false;
+        }
+
+        let test_z: Result<u32, TryFromIntError> = location.z().try_into();
+        if test_z.is_err() {
+            return false;
+        }
+
+        let x = test_x.unwrap();
+        let y = test_y.unwrap();
+        let z = test_z.unwrap();
+
+        return x < self.width && y < self.height && z < self.depth;
+    }
+}
+
+impl OfDimension for (u32, u32) {
+    fn of(self) -> Dimension {
+        return Dimension::of((self.0, self.1, 1));
+    }
+}
+
+impl OfDimension for (u32, u32, u32) {
+    fn of(self) -> Dimension {
+        if self.0 < 1 {
+            panic!("Dimension width must be positive");
+        }
+        if self.1 < 1 {
+            panic!("Dimension height must be positive");
+        }
+        if self.2 < 1 {
+            panic!("Dimension depth must be positive");
+        }
+
+        return Dimension {
+            width: self.0,
+            height: self.1,
+            depth: self.2,
+        };
+    }
+}
+
 /// Defines the absolute separation between two [`Location`] instances.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Distance {
@@ -75,11 +159,7 @@ impl Distance {
 
 impl OfDistance for (i32, i32) {
     fn of(self) -> Distance {
-        return Distance {
-            x: self.0.abs(),
-            y: self.1.abs(),
-            z: 0,
-        };
+        return Distance::of((self.0, self.1, 0));
     }
 }
 
@@ -146,11 +226,7 @@ impl Location {
 
 impl AtLocation for (i32, i32) {
     fn at(self) -> Location {
-        return Location {
-            x: self.0,
-            y: self.1,
-            z: 0,
-        };
+        return Location::at((self.0, self.1, 0));
     }
 }
 
@@ -207,11 +283,7 @@ impl Vector {
 
 impl OfVector for (i32, i32) {
     fn of(self) -> Vector {
-        return Vector {
-            x: self.0,
-            y: self.1,
-            z: 0,
-        };
+        return Vector::of((self.0, self.1, 0));
     }
 }
 

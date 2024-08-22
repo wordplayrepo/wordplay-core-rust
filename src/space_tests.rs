@@ -13,11 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use crate::space::Dimension;
 use crate::space::Distance;
 use crate::space::Location;
 use crate::space::Vector;
 use rstest::rstest;
 use std::cmp::Ordering;
+
+// Dimension start =====
+
+#[test]
+fn dimension_of_width_height() {
+    // given
+    let width = 1;
+    let height = 2;
+
+    // when
+    let result = Dimension::of((width, height));
+
+    // then
+    assert_eq!(result.width(), width);
+    assert_eq!(result.height(), height);
+    assert_eq!(result.depth(), 1);
+}
+
+// TODO finish unit tests for Dimension
+
+// Dimension end =====
 
 // Distance start =====
 
