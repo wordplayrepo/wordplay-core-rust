@@ -1,4 +1,3 @@
-use crate::space::Distance;
 /*
  * Copyright © 2024 Gregory P. Moyer
  *
@@ -14,9 +13,11 @@ use crate::space::Distance;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use crate::space::Distance;
 use crate::space::Location;
 use crate::space::Vector;
 use rstest::rstest;
+use std::cmp::Ordering;
 
 // Distance start =====
 
@@ -138,6 +139,32 @@ fn distance_is_within(#[case] x: i32, #[case] y: i32, #[case] z: i32, #[case] ex
     assert_eq!(result, expected)
 }
 
+#[rstest]
+#[case(1, 1, 1, 1, 1, 1, Ordering::Equal)]
+#[case(1, 1, 1, 2, 1, 1, Ordering::Less)]
+#[case(1, 1, 1, 1, 2, 1, Ordering::Less)]
+#[case(1, 1, 1, 1, 1, 2, Ordering::Less)]
+#[case(2, 2, 2, 3, 1, 1, Ordering::Less)]
+fn distance_cmp(
+    #[case] lhs_x: i32,
+    #[case] lhs_y: i32,
+    #[case] lhs_z: i32,
+    #[case] rhs_x: i32,
+    #[case] rhs_y: i32,
+    #[case] rhs_z: i32,
+    #[case] expected: Ordering,
+) {
+    // given
+    let lhs = Distance::of((lhs_x, lhs_y, lhs_z));
+    let rhs = Distance::of((rhs_x, rhs_y, rhs_z));
+
+    // when
+    let result = lhs.cmp(&rhs);
+
+    // then
+    assert_eq!(result, expected);
+}
+
 // Distance end =====
 
 // Location start =====
@@ -230,6 +257,32 @@ fn location_is_within(
     assert_eq!(result, expected);
 }
 
+#[rstest]
+#[case(1, 1, 1, 1, 1, 1, Ordering::Equal)]
+#[case(1, 1, 1, 2, 1, 1, Ordering::Less)]
+#[case(1, 1, 1, 1, 2, 1, Ordering::Less)]
+#[case(1, 1, 1, 1, 1, 2, Ordering::Less)]
+#[case(2, 2, 2, 3, 1, 1, Ordering::Less)]
+fn location_cmp(
+    #[case] lhs_x: i32,
+    #[case] lhs_y: i32,
+    #[case] lhs_z: i32,
+    #[case] rhs_x: i32,
+    #[case] rhs_y: i32,
+    #[case] rhs_z: i32,
+    #[case] expected: Ordering,
+) {
+    // given
+    let lhs = Location::at((lhs_x, lhs_y, lhs_z));
+    let rhs = Location::at((rhs_x, rhs_y, rhs_z));
+
+    // when
+    let result = lhs.cmp(&rhs);
+
+    // then
+    assert_eq!(result, expected);
+}
+
 // Location end =====
 
 // Vector start =====
@@ -293,6 +346,32 @@ fn vector_from(
         result,
         Vector::of((end_x - start_x, end_y - start_y, end_z - start_z))
     );
+}
+
+#[rstest]
+#[case(1, 1, 1, 1, 1, 1, Ordering::Equal)]
+#[case(1, 1, 1, 2, 1, 1, Ordering::Less)]
+#[case(1, 1, 1, 1, 2, 1, Ordering::Less)]
+#[case(1, 1, 1, 1, 1, 2, Ordering::Less)]
+#[case(2, 2, 2, 3, 1, 1, Ordering::Less)]
+fn vector_cmp(
+    #[case] lhs_x: i32,
+    #[case] lhs_y: i32,
+    #[case] lhs_z: i32,
+    #[case] rhs_x: i32,
+    #[case] rhs_y: i32,
+    #[case] rhs_z: i32,
+    #[case] expected: Ordering,
+) {
+    // given
+    let lhs = Vector::of((lhs_x, lhs_y, lhs_z));
+    let rhs = Vector::of((rhs_x, rhs_y, rhs_z));
+
+    // when
+    let result = lhs.cmp(&rhs);
+
+    // then
+    assert_eq!(result, expected);
 }
 
 // Vector end =====
