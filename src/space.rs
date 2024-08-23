@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use std::cmp;
+use std::collections::BTreeSet;
 use std::num::TryFromIntError;
 
 /// Defines a container in two- or three-dimensional space.
@@ -173,8 +175,56 @@ impl OfDistance for (i32, i32, i32) {
     }
 }
 
+/// Defines a path between start and end [`Location`] instances.
+pub struct Line {
+    locations: BTreeSet<Location>,
+}
+
+impl Line {
+    pub fn between(start: &Location, end: &Location) -> Line {
+        let mut locations: BTreeSet<Location> = BTreeSet::new();
+        locations.insert(*start);
+
+        let d = Distance::between(&start, &end);
+        let n: f32 = cmp::max(d.x(), cmp::max(d.y(), d.z())) as f32;
+
+        let sx: f32 = d.x() as f32 / n;
+        let sy: f32 = d.y() as f32 / n;
+        let sz: f32 = d.z() as f32 / n;
+
+        let mut px: f32 = start.x() as f32;
+        let mut py: f32 = start.y() as f32;
+        let mut pz: f32 = start.z() as f32;
+        for _ in 0..(n as i32) {
+            px += sx;
+            py += sy;
+            pz += sz;
+
+            locations.insert(Location::at((
+                px.round() as i32,
+                py.round() as i32,
+                pz.round() as i32,
+            )));
+        }
+
+        return Line { locations };
+    }
+
+    pub fn start(&self) -> &Location {
+        return self.locations.first().unwrap();
+    }
+
+    pub fn end(&self) -> &Location {
+        return self.locations.last().unwrap();
+    }
+
+    pub fn contains(&self, location: &Location) -> bool {
+        return self.locations.contains(location);
+    }
+}
+
 /// Defines a location in space without concern for what may or may not be at that location.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy)]
 pub struct Location {
     x: i32,
     y: i32,

@@ -15,6 +15,7 @@
  */
 use crate::space::Dimension;
 use crate::space::Distance;
+use crate::space::Line;
 use crate::space::Location;
 use crate::space::Vector;
 use rstest::rstest;
@@ -262,6 +263,38 @@ fn distance_cmp(
 }
 
 // Distance end =====
+
+// Line start =====
+
+#[test]
+fn line_start() {
+    // given
+    let start = Location::at((1, 2, 3));
+    let end = Location::at((4, 5, 6));
+
+    // when
+    let result = Line::between(&start, &end);
+
+    // then
+    assert_eq!(result.start(), &start);
+}
+
+#[test]
+fn line_end() {
+    // given
+    let start = Location::at((1, 2, 3));
+    let end = Location::at((4, 5, 6));
+
+    // when
+    let result = Line::between(&start, &end);
+
+    // then
+    assert_eq!(result.end(), &end);
+}
+
+// TODO finish unit tests for Line
+
+// Line start =====
 
 // Location start =====
 
