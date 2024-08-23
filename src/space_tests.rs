@@ -37,7 +37,81 @@ fn dimension_of_width_height() {
     assert_eq!(result.depth(), 1);
 }
 
-// TODO finish unit tests for Dimension
+#[test]
+fn dimension_of_width_height_depth() {
+    // given
+    let width = 1;
+    let height = 2;
+    let depth = 3;
+
+    // when
+    let result = Dimension::of((width, height, depth));
+
+    // then
+    assert_eq!(result.width(), width);
+    assert_eq!(result.height(), height);
+    assert_eq!(result.depth(), depth);
+}
+
+#[rstest]
+#[case(0, 1, 1)]
+#[case(1, 0, 1)]
+#[case(1, 1, 0)]
+#[should_panic]
+fn dimension_illegal_values(#[case] width: u32, #[case] height: u32, #[case] depth: u32) {
+    // when
+    Dimension::of((width, height, depth));
+}
+
+#[rstest]
+#[case(0, 0, 0, true)]
+#[case(1, 0, 0, true)]
+#[case(0, 1, 0, true)]
+#[case(0, 0, 1, true)]
+#[case(0, 1, 1, true)]
+#[case(1, 0, 1, true)]
+#[case(1, 1, 0, true)]
+#[case(1, 1, 1, true)]
+#[case(2, 0, 0, false)]
+#[case(0, 2, 0, false)]
+#[case(0, 0, 2, false)]
+fn dimension_contains(#[case] x: i32, #[case] y: i32, #[case] z: i32, #[case] expected: bool) {
+    // given
+    let dimension = Dimension::of((2, 2, 2));
+    let location = Location::at((x, y, z));
+
+    // when
+    let result = dimension.contains(&location);
+
+    // then
+    assert_eq!(result, expected);
+}
+
+#[rstest]
+#[case(1, 1, 1, 1, 1, 1, Ordering::Equal)]
+#[case(1, 1, 1, 2, 1, 1, Ordering::Less)]
+#[case(1, 1, 1, 1, 2, 1, Ordering::Less)]
+#[case(1, 1, 1, 1, 1, 2, Ordering::Less)]
+#[case(2, 2, 2, 3, 1, 1, Ordering::Less)]
+fn dimension_cmp(
+    #[case] lhs_width: u32,
+    #[case] lhs_height: u32,
+    #[case] lhs_depth: u32,
+    #[case] rhs_width: u32,
+    #[case] rhs_height: u32,
+    #[case] rhs_depth: u32,
+    #[case] expected: Ordering,
+) {
+    // given
+    let lhs = Dimension::of((lhs_width, lhs_height, lhs_depth));
+    let rhs = Dimension::of((rhs_width, rhs_height, rhs_depth));
+
+    // when
+    let result = lhs.cmp(&rhs);
+
+    // then
+    assert_eq!(result, expected);
+}
 
 // Dimension end =====
 
