@@ -18,7 +18,7 @@ use std::collections::BTreeSet;
 use std::num::TryFromIntError;
 
 /// Defines a container in two- or three-dimensional space.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Dimension {
     width: u32,
     height: u32,
@@ -97,7 +97,7 @@ impl Dimension {
 }
 
 /// Defines the absolute separation between two [`Location`] instances.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Distance {
     x: i32,
     y: i32,
@@ -170,6 +170,7 @@ impl Distance {
 }
 
 /// Defines a path between start and end [`Location`] instances.
+#[derive(Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Line {
     locations: BTreeSet<Location>,
 }
@@ -218,7 +219,7 @@ impl Line {
 }
 
 /// Defines a location in space without concern for what may or may not be at that location.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Location {
     x: i32,
     y: i32,
@@ -282,7 +283,7 @@ impl Location {
 }
 
 /// Defines the distance and direction to go from one [`Location`] to another.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Vector {
     x: i32,
     y: i32,
