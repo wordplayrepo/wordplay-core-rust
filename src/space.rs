@@ -31,7 +31,7 @@ pub trait DimensionOf {
 
 impl DimensionOf for (u32, u32) {
     fn of(self) -> Dimension {
-        return Dimension::of((self.0, self.1, 1));
+        Dimension::of((self.0, self.1, 1))
     }
 }
 
@@ -47,11 +47,11 @@ impl DimensionOf for (u32, u32, u32) {
             panic!("Dimension depth must be positive");
         }
 
-        return Dimension {
+        Dimension {
             width: self.0,
             height: self.1,
             depth: self.2,
-        };
+        }
     }
 }
 
@@ -61,15 +61,15 @@ impl Dimension {
     }
 
     pub fn width(&self) -> u32 {
-        return self.width;
+        self.width
     }
 
     pub fn height(&self) -> u32 {
-        return self.height;
+        self.height
     }
 
     pub fn depth(&self) -> u32 {
-        return self.depth;
+        self.depth
     }
 
     pub fn contains(&self, location: &Location) -> bool {
@@ -92,7 +92,7 @@ impl Dimension {
         let y = test_y.unwrap();
         let z = test_z.unwrap();
 
-        return x < self.width && y < self.height && z < self.depth;
+        x < self.width && y < self.height && z < self.depth
     }
 }
 
@@ -117,27 +117,27 @@ pub trait DistanceOf {
 
 impl DistanceOf for (i32, i32) {
     fn of(self) -> Distance {
-        return Distance::of((self.0, self.1, 0));
+        Distance::of((self.0, self.1, 0))
     }
 }
 
 impl DistanceOf for (i32, i32, i32) {
     fn of(self) -> Distance {
-        return Distance {
+        Distance {
             x: self.0.abs(),
             y: self.1.abs(),
             z: self.2.abs(),
-        };
+        }
     }
 }
 
 impl Distance {
     pub fn zero() -> &'static Distance {
-        return &ZERO;
+        &ZERO
     }
 
     pub fn max() -> &'static Distance {
-        return &MAX;
+        &MAX
     }
 
     pub fn of<A: DistanceOf>(args: A) -> Distance {
@@ -145,27 +145,27 @@ impl Distance {
     }
 
     pub fn x(&self) -> i32 {
-        return self.x;
+        self.x
     }
 
     pub fn y(&self) -> i32 {
-        return self.y;
+        self.y
     }
 
     pub fn z(&self) -> i32 {
-        return self.z;
+        self.z
     }
 
     pub fn between(start: &Location, end: &Location) -> Distance {
-        return Distance::of((
+        Distance::of((
             end.x() - start.x(),
             end.y() - start.y(),
             end.z() - start.z(),
-        ));
+        ))
     }
 
     pub fn is_within(&self, distance: Distance) -> bool {
-        return self.x <= distance.x() && self.y <= distance.y() && self.z <= distance.z();
+        self.x <= distance.x() && self.y <= distance.y() && self.z <= distance.z()
     }
 }
 
@@ -201,19 +201,19 @@ impl Line {
             )));
         }
 
-        return Line { locations };
+        Line { locations }
     }
 
     pub fn start(&self) -> &Location {
-        return self.locations.first().unwrap();
+        self.locations.first().unwrap()
     }
 
     pub fn end(&self) -> &Location {
-        return self.locations.last().unwrap();
+        self.locations.last().unwrap()
     }
 
     pub fn contains(&self, location: &Location) -> bool {
-        return self.locations.contains(location);
+        self.locations.contains(location)
     }
 }
 
@@ -231,17 +231,17 @@ pub trait LocationAt {
 
 impl LocationAt for (i32, i32) {
     fn at(self) -> Location {
-        return Location::at((self.0, self.1, 0));
+        Location::at((self.0, self.1, 0))
     }
 }
 
 impl LocationAt for (i32, i32, i32) {
     fn at(self) -> Location {
-        return Location {
+        Location {
             x: self.0,
             y: self.1,
             z: self.2,
-        };
+        }
     }
 }
 
@@ -251,23 +251,23 @@ impl Location {
     }
 
     pub fn x(&self) -> i32 {
-        return self.x;
+        self.x
     }
 
     pub fn y(&self) -> i32 {
-        return self.y;
+        self.y
     }
 
     pub fn z(&self) -> i32 {
-        return self.z;
+        self.z
     }
 
     pub fn go(&self, vector: &Vector) -> Location {
-        return Location::at((
+        Location::at((
             self.x + vector.x(),
             self.y + vector.y(),
             self.z + vector.z(),
-        ));
+        ))
     }
 
     pub fn is_within(&self, distance: &Distance, location: &Location) -> bool {
@@ -275,9 +275,9 @@ impl Location {
         let other_y = location.y();
         let other_z = location.z();
 
-        return (self.x - other_x).abs() <= distance.x()
+        (self.x - other_x).abs() <= distance.x()
             && (self.y - other_y).abs() <= distance.y()
-            && (self.z - other_z).abs() <= distance.z();
+            && (self.z - other_z).abs() <= distance.z()
     }
 }
 
@@ -295,17 +295,17 @@ pub trait VectorOf {
 
 impl VectorOf for (i32, i32) {
     fn of(self) -> Vector {
-        return Vector::of((self.0, self.1, 0));
+        Vector::of((self.0, self.1, 0))
     }
 }
 
 impl VectorOf for (i32, i32, i32) {
     fn of(self) -> Vector {
-        return Vector {
+        Vector {
             x: self.0,
             y: self.1,
             z: self.2,
-        };
+        }
     }
 }
 
@@ -315,22 +315,22 @@ impl Vector {
     }
 
     pub fn x(&self) -> i32 {
-        return self.x;
+        self.x
     }
 
     pub fn y(&self) -> i32 {
-        return self.y;
+        self.y
     }
 
     pub fn z(&self) -> i32 {
-        return self.z;
+        self.z
     }
 
     pub fn from(start: &Location, end: &Location) -> Vector {
-        return Vector::of((
+        Vector::of((
             end.x() - start.x(),
             end.y() - start.y(),
             end.z() - start.z(),
-        ));
+        ))
     }
 }
