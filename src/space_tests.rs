@@ -76,6 +76,9 @@ fn dimension_illegal_values(#[case] width: u32, #[case] height: u32, #[case] dep
 #[case(2, 0, 0, false)]
 #[case(0, 2, 0, false)]
 #[case(0, 0, 2, false)]
+#[case(-1, 0, 0, false)]
+#[case(0, -1, 0, false)]
+#[case(0, 0, -1, false)]
 fn dimension_contains(#[case] x: i32, #[case] y: i32, #[case] z: i32, #[case] expected: bool) {
     // given
     let dimension = Dimension::of((2, 2, 2));
