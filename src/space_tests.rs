@@ -292,7 +292,103 @@ fn line_end() {
     assert_eq!(result.end(), &end);
 }
 
-// TODO finish unit tests for Line
+#[test]
+fn line_point() {
+    // given
+    let point = Location::at((1, 1, 1));
+
+    // when
+    let result = Line::between(&point, &point);
+
+    // then
+    assert_eq!(result.start(), result.end());
+}
+
+#[rstest]
+#[case(0, 1, 1, false)]
+#[case(1, 0, 1, false)]
+#[case(1, 1, 0, false)]
+#[case(1, 1, 1, true)]
+#[case(2, 1, 1, true)]
+#[case(3, 1, 1, true)]
+#[case(4, 1, 1, true)]
+#[case(5, 1, 1, false)]
+#[case(2, 2, 1, false)]
+#[case(2, 0, 1, false)]
+fn line_contains_x_axis(#[case] x: i32, #[case] y: i32, #[case] z: i32, #[case] expected: bool) {
+    // given
+    let line = Line::between(&Location::at((1, 1, 1)), &Location::at((4, 1, 1)));
+
+    // when
+    let result = line.contains(&Location::at((x, y, z)));
+
+    // then
+    assert_eq!(result, expected);
+}
+
+#[rstest]
+#[case(0, 1, 1, false)]
+#[case(1, 0, 1, false)]
+#[case(1, 1, 0, false)]
+#[case(1, 1, 1, true)]
+#[case(1, 2, 1, true)]
+#[case(1, 3, 1, true)]
+#[case(1, 4, 1, true)]
+#[case(1, 5, 1, false)]
+#[case(2, 2, 1, false)]
+#[case(0, 2, 1, false)]
+fn line_contains_y_axis(#[case] x: i32, #[case] y: i32, #[case] z: i32, #[case] expected: bool) {
+    // given
+    let line = Line::between(&Location::at((1, 1, 1)), &Location::at((1, 4, 1)));
+
+    // when
+    let result = line.contains(&Location::at((x, y, z)));
+
+    // then
+    assert_eq!(result, expected);
+}
+
+#[rstest]
+#[case(0, 1, 1, false)]
+#[case(1, 0, 1, false)]
+#[case(1, 1, 0, false)]
+#[case(1, 1, 1, true)]
+#[case(1, 1, 2, true)]
+#[case(1, 1, 3, true)]
+#[case(1, 1, 4, true)]
+#[case(1, 1, 5, false)]
+#[case(1, 2, 2, false)]
+#[case(1, 2, 0, false)]
+fn line_contains_z_axis(#[case] x: i32, #[case] y: i32, #[case] z: i32, #[case] expected: bool) {
+    // given
+    let line = Line::between(&Location::at((1, 1, 1)), &Location::at((1, 1, 4)));
+
+    // when
+    let result = line.contains(&Location::at((x, y, z)));
+
+    // then
+    assert_eq!(result, expected);
+}
+
+#[rstest]
+#[case(0, 0, 0, false)]
+#[case(1, 1, 1, true)]
+#[case(2, 2, 2, true)]
+#[case(3, 3, 3, true)]
+#[case(4, 4, 4, true)]
+#[case(5, 5, 5, false)]
+#[case(2, 1, 2, false)]
+#[case(2, 3, 2, false)]
+fn line_contains_diagonal(#[case] x: i32, #[case] y: i32, #[case] z: i32, #[case] expected: bool) {
+    // given
+    let line = Line::between(&Location::at((1, 1, 1)), &Location::at((4, 4, 4)));
+
+    // when
+    let result = line.contains(&Location::at((x, y, z)));
+
+    // then
+    assert_eq!(result, expected);
+}
 
 // Line start =====
 
