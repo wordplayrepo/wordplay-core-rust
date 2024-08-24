@@ -25,15 +25,38 @@ pub struct Dimension {
     depth: u32,
 }
 
-pub trait OfDimension {
+pub trait DimensionOf {
     fn of(self) -> Dimension;
 }
 
+impl DimensionOf for (u32, u32) {
+    fn of(self) -> Dimension {
+        return Dimension::of((self.0, self.1, 1));
+    }
+}
+
+impl DimensionOf for (u32, u32, u32) {
+    fn of(self) -> Dimension {
+        if self.0 < 1 {
+            panic!("Dimension width must be positive");
+        }
+        if self.1 < 1 {
+            panic!("Dimension height must be positive");
+        }
+        if self.2 < 1 {
+            panic!("Dimension depth must be positive");
+        }
+
+        return Dimension {
+            width: self.0,
+            height: self.1,
+            depth: self.2,
+        };
+    }
+}
+
 impl Dimension {
-    pub fn of<A>(args: A) -> Dimension
-    where
-        A: OfDimension,
-    {
+    pub fn of<A: DimensionOf>(args: A) -> Dimension {
         args.of()
     }
 
@@ -73,32 +96,6 @@ impl Dimension {
     }
 }
 
-impl OfDimension for (u32, u32) {
-    fn of(self) -> Dimension {
-        return Dimension::of((self.0, self.1, 1));
-    }
-}
-
-impl OfDimension for (u32, u32, u32) {
-    fn of(self) -> Dimension {
-        if self.0 < 1 {
-            panic!("Dimension width must be positive");
-        }
-        if self.1 < 1 {
-            panic!("Dimension height must be positive");
-        }
-        if self.2 < 1 {
-            panic!("Dimension depth must be positive");
-        }
-
-        return Dimension {
-            width: self.0,
-            height: self.1,
-            depth: self.2,
-        };
-    }
-}
-
 /// Defines the absolute separation between two [`Location`] instances.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Distance {
@@ -114,8 +111,24 @@ static MAX: Distance = Distance {
     z: i32::MAX,
 };
 
-pub trait OfDistance {
+pub trait DistanceOf {
     fn of(self) -> Distance;
+}
+
+impl DistanceOf for (i32, i32) {
+    fn of(self) -> Distance {
+        return Distance::of((self.0, self.1, 0));
+    }
+}
+
+impl DistanceOf for (i32, i32, i32) {
+    fn of(self) -> Distance {
+        return Distance {
+            x: self.0.abs(),
+            y: self.1.abs(),
+            z: self.2.abs(),
+        };
+    }
 }
 
 impl Distance {
@@ -127,10 +140,7 @@ impl Distance {
         return &MAX;
     }
 
-    pub fn of<A>(args: A) -> Distance
-    where
-        A: OfDistance,
-    {
+    pub fn of<A: DistanceOf>(args: A) -> Distance {
         args.of()
     }
 
@@ -156,22 +166,6 @@ impl Distance {
 
     pub fn is_within(&self, distance: Distance) -> bool {
         return self.x <= distance.x() && self.y <= distance.y() && self.z <= distance.z();
-    }
-}
-
-impl OfDistance for (i32, i32) {
-    fn of(self) -> Distance {
-        return Distance::of((self.0, self.1, 0));
-    }
-}
-
-impl OfDistance for (i32, i32, i32) {
-    fn of(self) -> Distance {
-        return Distance {
-            x: self.0.abs(),
-            y: self.1.abs(),
-            z: self.2.abs(),
-        };
     }
 }
 
@@ -231,15 +225,28 @@ pub struct Location {
     z: i32,
 }
 
-pub trait AtLocation {
+pub trait LocationAt {
     fn at(self) -> Location;
 }
 
+impl LocationAt for (i32, i32) {
+    fn at(self) -> Location {
+        return Location::at((self.0, self.1, 0));
+    }
+}
+
+impl LocationAt for (i32, i32, i32) {
+    fn at(self) -> Location {
+        return Location {
+            x: self.0,
+            y: self.1,
+            z: self.2,
+        };
+    }
+}
+
 impl Location {
-    pub fn at<A>(args: A) -> Location
-    where
-        A: AtLocation,
-    {
+    pub fn at<A: LocationAt>(args: A) -> Location {
         args.at()
     }
 
@@ -274,22 +281,6 @@ impl Location {
     }
 }
 
-impl AtLocation for (i32, i32) {
-    fn at(self) -> Location {
-        return Location::at((self.0, self.1, 0));
-    }
-}
-
-impl AtLocation for (i32, i32, i32) {
-    fn at(self) -> Location {
-        return Location {
-            x: self.0,
-            y: self.1,
-            z: self.2,
-        };
-    }
-}
-
 /// Defines the distance and direction to go from one [`Location`] to another.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Vector {
@@ -298,15 +289,28 @@ pub struct Vector {
     z: i32,
 }
 
-pub trait OfVector {
+pub trait VectorOf {
     fn of(self) -> Vector;
 }
 
+impl VectorOf for (i32, i32) {
+    fn of(self) -> Vector {
+        return Vector::of((self.0, self.1, 0));
+    }
+}
+
+impl VectorOf for (i32, i32, i32) {
+    fn of(self) -> Vector {
+        return Vector {
+            x: self.0,
+            y: self.1,
+            z: self.2,
+        };
+    }
+}
+
 impl Vector {
-    pub fn of<A>(args: A) -> Vector
-    where
-        A: OfVector,
-    {
+    pub fn of<A: VectorOf>(args: A) -> Vector {
         args.of()
     }
 
@@ -328,21 +332,5 @@ impl Vector {
             end.y() - start.y(),
             end.z() - start.z(),
         ));
-    }
-}
-
-impl OfVector for (i32, i32) {
-    fn of(self) -> Vector {
-        return Vector::of((self.0, self.1, 0));
-    }
-}
-
-impl OfVector for (i32, i32, i32) {
-    fn of(self) -> Vector {
-        return Vector {
-            x: self.0,
-            y: self.1,
-            z: self.2,
-        };
     }
 }
