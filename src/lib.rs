@@ -15,5 +15,7 @@
  */
 pub mod space;
 
+mod rust;
+
 #[cfg(test)]
 mod space_tests;

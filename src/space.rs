@@ -13,9 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use std::cmp;
 use std::collections::BTreeSet;
+use std::fmt::Debug;
+use std::hash::{Hash, Hasher};
 use std::num::TryFromIntError;
+use std::cmp;
+
+use indexmap::{indexset, IndexSet};
+
+use crate::rust::{DynEq, DynHash};
 
 /// Defines a container in two- or three-dimensional space.
 #[derive(Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
@@ -279,6 +285,88 @@ impl Location {
         (self.x - other_x).abs() <= distance.x()
             && (self.y - other_y).abs() <= distance.y()
             && (self.z - other_z).abs() <= distance.z()
+    }
+}
+
+/// This interface represents a spatial orientation that defines an infinite length line along which any number of [`Location`] can exist.
+pub trait Orientation: DynEq + DynHash + Debug {
+    /// Move from the given [`Location`] by the provided amount (negative or positive) along the line defined by this orientation.
+    fn go(&self, location: &Location, amount: i32) -> Location;
+
+    /// Determine if the given [`Distance`] exists entirely within the line defined by this orientation.
+    fn contains(&self, distance: &Distance) -> bool;
+}
+
+impl Eq for dyn Orientation {}
+
+impl PartialEq<dyn Orientation> for dyn Orientation {
+    fn eq(&self, other: &dyn Orientation) -> bool {
+        self.as_dyn_eq() == other.as_dyn_eq()
+    }
+}
+
+impl Hash for dyn Orientation {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.dyn_hash(state)
+    }
+}
+
+pub struct Orientations;
+impl Orientations {
+    pub fn x() -> Box<dyn Orientation> {
+        Box::new(XOrientation {})
+    }
+
+    pub fn y() -> Box<dyn Orientation> {
+        Box::new(YOrientation {})
+    }
+
+    pub fn z() -> Box<dyn Orientation> {
+        Box::new(ZOrientation {})
+    }
+
+    pub fn xy() -> IndexSet<Box<dyn Orientation>> {
+        indexset!{Self::x(), Self::y()}
+    }
+
+    pub fn xyz() -> IndexSet<Box<dyn Orientation>> {
+        indexset!{Self::x(), Self::y(), Self::z()}
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+struct XOrientation;
+impl Orientation for XOrientation {
+    fn go(&self, location: &Location, amount: i32) -> Location {
+        location.go(&Vector::of((amount, 0, 0)))
+    }
+
+    fn contains(&self, distance: &Distance) -> bool {
+        distance.y() == 0 && distance.z() == 0
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+struct YOrientation;
+impl Orientation for YOrientation {
+    fn go(&self, location: &Location, amount: i32) -> Location {
+        location.go(&Vector::of((0, amount, 0)))
+    }
+
+    fn contains(&self, distance: &Distance) -> bool {
+        distance.x() == 0 && distance.z() == 0
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+struct ZOrientation;
+impl Orientation for ZOrientation {
+    fn go(&self, location: &Location, amount: i32) -> Location {
+        location.go(&Vector::of((0, 0, amount)))
+    }
+
+    fn contains(&self, distance: &Distance) -> bool {
+        distance.x() == 0 && distance.y() == 0
     }
 }
 

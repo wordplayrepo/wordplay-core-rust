@@ -17,6 +17,8 @@ use crate::space::Dimension;
 use crate::space::Distance;
 use crate::space::Line;
 use crate::space::Location;
+use crate::space::Orientation;
+use crate::space::Orientations;
 use crate::space::Vector;
 use rstest::rstest;
 use std::cmp::Ordering;
@@ -512,6 +514,92 @@ fn location_cmp(
 }
 
 // Location end =====
+
+// Orientations start =====
+
+#[rstest]
+#[case(Orientations::x(), Location::at((1, 1, 1)), -1, Location::at((0, 1, 1)))]
+#[case(Orientations::x(), Location::at((1, 1, 1)), 1, Location::at((2, 1, 1)))]
+#[case(Orientations::y(), Location::at((1, 1, 1)), -1, Location::at((1, 0, 1)))]
+#[case(Orientations::y(), Location::at((1, 1, 1)), 1, Location::at((1, 2, 1)))]
+#[case(Orientations::z(), Location::at((1, 1, 1)), -1, Location::at((1, 1, 0)))]
+#[case(Orientations::z(), Location::at((1, 1, 1)), 1, Location::at((1, 1, 2)))]
+fn orientations_go(
+    #[case] orientation: Box<dyn Orientation>,
+    #[case] start: Location,
+    #[case] amount: i32,
+    #[case] end: Location,
+) {
+    // when
+    let result = orientation.go(&start, amount);
+
+    // then
+    assert_eq!(result, end);
+}
+
+#[rstest]
+#[case(Orientations::x(), Distance::of((1, 0, 0)), true)]
+#[case(Orientations::x(), Distance::of((0, 1, 0)), false)]
+#[case(Orientations::x(), Distance::of((0, 0, 1)), false)]
+#[case(Orientations::y(), Distance::of((1, 0, 0)), false)]
+#[case(Orientations::y(), Distance::of((0, 1, 0)), true)]
+#[case(Orientations::y(), Distance::of((0, 0, 1)), false)]
+#[case(Orientations::z(), Distance::of((1, 0, 0)), false)]
+#[case(Orientations::z(), Distance::of((0, 1, 0)), false)]
+#[case(Orientations::z(), Distance::of((0, 0, 1)), true)]
+fn orientations_contains(
+    #[case] orientation: Box<dyn Orientation>,
+    #[case] distance: Distance,
+    #[case] expected: bool,
+) {
+    // when
+    let result = orientation.contains(&distance);
+
+    // then
+    assert_eq!(result, expected);
+}
+
+#[rstest]
+#[case(Orientations::x(), Orientations::x(), true)]
+#[case(Orientations::y(), Orientations::y(), true)]
+#[case(Orientations::z(), Orientations::z(), true)]
+#[case(Orientations::x(), Orientations::y(), false)]
+#[case(Orientations::x(), Orientations::z(), false)]
+#[case(Orientations::y(), Orientations::z(), false)]
+fn orientations_eq(
+    #[case] lhs: Box<dyn Orientation>,
+    #[case] rhs: Box<dyn Orientation>,
+    #[case] expected: bool,
+) {
+    // when
+    let result = lhs == rhs;
+
+    // then
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn orientations_xy() {
+    // when
+    let result = Orientations::xy();
+
+    // then
+    assert_eq!(&result[0], &Orientations::x());
+    assert_eq!(&result[1], &Orientations::y());
+}
+
+#[test]
+fn orientations_xyz() {
+    // when
+    let result = Orientations::xyz();
+
+    // then
+    assert_eq!(&result[0], &Orientations::x());
+    assert_eq!(&result[1], &Orientations::y());
+    assert_eq!(&result[2], &Orientations::z());
+}
+
+// Orientations end =====
 
 // Vector start =====
 
