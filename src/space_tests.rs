@@ -236,7 +236,7 @@ fn distance_is_within(#[case] x: i32, #[case] y: i32, #[case] z: i32, #[case] ex
     let distance = Distance::of((x, y, z));
 
     // when
-    let result = distance.is_within(Distance::of((1, 1, 1)));
+    let result = distance.is_within(&Distance::of((1, 1, 1)));
 
     // then
     assert_eq!(result, expected)

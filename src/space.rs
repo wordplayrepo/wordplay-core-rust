@@ -171,7 +171,7 @@ impl Distance {
         ))
     }
 
-    pub fn is_within(&self, distance: Distance) -> bool {
+    pub fn is_within(&self, distance: &Distance) -> bool {
         self.x <= distance.x() && self.y <= distance.y() && self.z <= distance.z()
     }
 }
