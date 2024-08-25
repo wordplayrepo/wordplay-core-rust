@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pub mod component;
-pub mod lang;
-pub mod space;
 
-mod rust;
+use std::fmt::Display;
 
-#[cfg(test)]
-mod space_tests;
+use crate::rust::{DynEq, DynHash};
+
+/// A letter represents a single character that, when put together with other letters, creates a word that can be used in a placement.
+pub trait Letter: Display + DynEq + DynHash {
+    /// Retrieve the character that represents this letter.
+    fn character(&self) -> char;
+}
