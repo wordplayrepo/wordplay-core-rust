@@ -25,7 +25,7 @@ use indexmap::{indexset, IndexSet};
 use crate::rust::{DynEq, DynHash};
 
 /// Defines a container in two- or three-dimensional space.
-#[derive(Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Dimension {
     width: u32,
     height: u32,
@@ -104,7 +104,7 @@ impl Dimension {
 }
 
 /// Defines the absolute separation between two [`Location`] instances.
-#[derive(Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Distance {
     x: i32,
     y: i32,
@@ -177,7 +177,7 @@ impl Distance {
 }
 
 /// Defines a path between start and end [`Location`] instances.
-#[derive(Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Line {
     locations: BTreeSet<Location>,
 }
@@ -226,7 +226,7 @@ impl Line {
 }
 
 /// Defines a location in space without concern for what may or may not be at that location.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Location {
     x: i32,
     y: i32,
@@ -335,7 +335,7 @@ impl Orientations {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 struct XOrientation;
 impl Orientation for XOrientation {
     fn go(&self, location: &Location, amount: i32) -> Location {
@@ -347,7 +347,7 @@ impl Orientation for XOrientation {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 struct YOrientation;
 impl Orientation for YOrientation {
     fn go(&self, location: &Location, amount: i32) -> Location {
@@ -359,7 +359,7 @@ impl Orientation for YOrientation {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 struct ZOrientation;
 impl Orientation for ZOrientation {
     fn go(&self, location: &Location, amount: i32) -> Location {
@@ -372,7 +372,7 @@ impl Orientation for ZOrientation {
 }
 
 /// Defines the distance and direction to go from one [`Location`] to another.
-#[derive(Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Vector {
     x: i32,
     y: i32,
