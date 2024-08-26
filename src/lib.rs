@@ -20,4 +20,7 @@ pub mod space;
 mod rust;
 
 #[cfg(test)]
+mod component_tests;
+
+#[cfg(test)]
 mod space_tests;

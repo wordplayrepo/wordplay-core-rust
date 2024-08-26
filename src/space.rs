@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
+use std::cmp;
 use std::collections::BTreeSet;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 use std::num::TryFromIntError;
-use std::cmp;
 
+use dyn_clone::{clone_trait_object, DynClone};
 use indexmap::{indexset, IndexSet};
 
 use crate::rust::{DynEq, DynHash};
 
 /// Defines a container in two- or three-dimensional space.
-#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Dimension {
     width: u32,
     height: u32,
@@ -104,7 +105,7 @@ impl Dimension {
 }
 
 /// Defines the absolute separation between two [`Location`] instances.
-#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Distance {
     x: i32,
     y: i32,
@@ -177,7 +178,7 @@ impl Distance {
 }
 
 /// Defines a path between start and end [`Location`] instances.
-#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Line {
     locations: BTreeSet<Location>,
 }
@@ -290,7 +291,7 @@ impl Location {
 }
 
 /// This interface represents a spatial orientation that defines an infinite length line along which any number of [`Location`] can exist.
-pub trait Orientation: DynEq + DynHash + Debug {
+pub trait Orientation: DynClone + DynEq + DynHash + Debug {
     /// Move from the given [`Location`] by the provided amount (negative or positive) along the line defined by this orientation.
     fn go(&self, location: &Location, amount: i32) -> Location;
 
@@ -298,17 +299,19 @@ pub trait Orientation: DynEq + DynHash + Debug {
     fn contains(&self, distance: &Distance) -> bool;
 }
 
-impl Eq for dyn Orientation {}
+clone_trait_object!(Orientation);
 
-impl PartialEq<dyn Orientation> for dyn Orientation {
-    fn eq(&self, other: &dyn Orientation) -> bool {
-        self.as_dyn_eq() == other.as_dyn_eq()
-    }
-}
+impl Eq for dyn Orientation {}
 
 impl Hash for dyn Orientation {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.dyn_hash(state)
+    }
+}
+
+impl PartialEq<dyn Orientation> for dyn Orientation {
+    fn eq(&self, other: &dyn Orientation) -> bool {
+        self.as_dyn_eq() == other.as_dyn_eq()
     }
 }
 
@@ -327,15 +330,15 @@ impl Orientations {
     }
 
     pub fn xy() -> IndexSet<Box<dyn Orientation>> {
-        indexset!{Self::x(), Self::y()}
+        indexset! {Self::x(), Self::y()}
     }
 
     pub fn xyz() -> IndexSet<Box<dyn Orientation>> {
-        indexset!{Self::x(), Self::y(), Self::z()}
+        indexset! {Self::x(), Self::y(), Self::z()}
     }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct XOrientation;
 impl Orientation for XOrientation {
     fn go(&self, location: &Location, amount: i32) -> Location {
@@ -347,7 +350,7 @@ impl Orientation for XOrientation {
     }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct YOrientation;
 impl Orientation for YOrientation {
     fn go(&self, location: &Location, amount: i32) -> Location {
@@ -359,7 +362,7 @@ impl Orientation for YOrientation {
     }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct ZOrientation;
 impl Orientation for ZOrientation {
     fn go(&self, location: &Location, amount: i32) -> Location {
@@ -372,7 +375,7 @@ impl Orientation for ZOrientation {
 }
 
 /// Defines the distance and direction to go from one [`Location`] to another.
-#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Vector {
     x: i32,
     y: i32,

@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+    hash::{Hash, Hasher},
+};
 
+use dyn_clone::{clone_trait_object, DynClone};
 use indexmap::IndexSet;
 
 use crate::{
@@ -27,22 +32,22 @@ use crate::{
 /// A board represents the playing area for a game. It consists of a set of [`Tile`] on which a
 /// [`Placement`] of [`Piece`] can be made. These tiles can also have other attributes that affect
 /// the score or gameplay when a piece is played on them.
-pub trait Board {
+pub trait Board: Debug + DynClone {
     /// Retrieve the sizing of this board.
     fn dimension(&self) -> Dimension;
 
     /// Determine whether or not the given [`Placement`] is valid on this board given the current
     /// state of other placements (if any exist).
-    fn valid<T: Placement>(&self, placement: &T) -> bool;
+    fn valid(&self, placement: &dyn Placement) -> bool;
 
     /// Calculate the score that the given [`Placement`] would receive.
-    fn calculate_points<T: Placement>(&self, placement: &T) -> i32;
+    fn calculate_points(&self, placement: &dyn Placement) -> i32;
 
     /// Commit the given [`Placement`] to this board.
-    fn place<T: Placement>(&mut self, placement: T) -> Result<i32, Error>;
+    fn place(&mut self, placement: dyn Placement) -> Result<i32, Error>;
 
     /// Retrieve the set of [`Tile`] that make up this board.
-    fn tiles<T: TileSet>(&self) -> &T;
+    fn tiles(&self) -> &dyn TileSet;
 
     /// Retrieve the starting [`Location`] for this board.
     fn start(&self) -> &Location;
@@ -51,14 +56,16 @@ pub trait Board {
     fn orientations(&self) -> &IndexSet<Box<dyn Orientation>>;
 }
 
-/// A piece represents a game token that is contains a [`Letter`] and has attributes such as a value
+clone_trait_object!(Board);
+
+/// A piece represents a game token that contains a [`Letter`] and has attributes such as a value
 /// and a wildcard status.
-pub trait Piece: Copy + DynEq + DynHash {
+pub trait Piece: Debug + DynClone + DynEq + DynHash {
     /// Set the [`Letter`] that this piece represents.
-    fn set_letter<T: Letter>(&mut self, letter: T);
+    fn set_letter(&mut self, letter: dyn Letter);
 
     /// Retrieve the [`Letter`] that this piece represents.
-    fn letter<T: Letter>(&self) -> &T;
+    fn letter(&self) -> &dyn Letter;
 
     /// Retrieve the base value of this piece when used in a placement.
     fn value(&self) -> i32;
@@ -68,46 +75,100 @@ pub trait Piece: Copy + DynEq + DynHash {
     fn wild(&self) -> bool;
 }
 
+clone_trait_object!(Piece);
+
+impl Eq for dyn Piece {}
+
+impl Hash for dyn Piece {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.dyn_hash(state)
+    }
+}
+
+impl PartialEq<dyn Piece> for dyn Piece {
+    fn eq(&self, other: &dyn Piece) -> bool {
+        self.as_dyn_eq() == other.as_dyn_eq()
+    }
+}
+
 /// A placement is a specific grouping of pieces with a location and orientation.
-pub trait Placement: DynEq + DynHash {
+pub trait Placement: Debug + DynClone + DynEq + DynHash {
     /// Retrieve the starting location of this placement.
     fn start_location(&self) -> &Location;
 
     /// Retrieve the spatial orientation of this placement (e.g. along the x-axis).
-    fn orientation<T: Orientation>(&self) -> &T;
+    fn orientation(&self) -> &dyn Orientation;
 
     /// Retrieve the pieces contained within this placement.
-    fn pieces<T: Piece>(&self) -> &Vec<T>;
+    fn pieces(&self) -> &Vec<Box<dyn Piece>>;
+}
+
+clone_trait_object!(Placement);
+
+impl Eq for dyn Placement {}
+
+impl Hash for dyn Placement {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.dyn_hash(state)
+    }
+}
+
+impl PartialEq<dyn Placement> for dyn Placement {
+    fn eq(&self, other: &dyn Placement) -> bool {
+        self.as_dyn_eq() == other.as_dyn_eq()
+    }
 }
 
 /// A tile represents a location on the game [`Board`] that can be occupied by a [`Piece`].
-pub trait Tile: DynOrd + DynHash {
+pub trait Tile: Debug + DynClone + DynEq + DynOrd + DynHash {
     /// Retrieve this tile's location.
     fn location(&self) -> &Location;
 
     /// Set the [`Piece`] that occupies this tile.
-    fn set_piece<T: Piece>(&mut self, piece: T);
+    fn set_piece(&mut self, piece: dyn Piece);
 
     /// Get the piece that occupies this tile or nothing if empty.
-    fn piece<T: Piece>(&self) -> Option<&T>;
+    fn piece(&self) -> Option<&dyn Piece>;
 
     /// Retrieve the value of this tile taking into account only the value of a [`Piece`] on the
     /// tile. Attributes are not considered.
     fn base_value(&self) -> i32;
 
     /// Add the given attribute to this tile that may affect the score or gameplay.
-    fn add_attribute<T: TileAttribute>(&mut self, attribute: T);
+    fn add_attribute(&mut self, attribute: dyn TileAttribute);
 
     /// Remove the given attribute from this tile that may affect the score or gameplay.
-    fn remove_attribute<T: TileAttribute>(&mut self, attribute: T);
+    fn remove_attribute(&mut self, attribute: &dyn TileAttribute);
 
     /// Retrieve the set of attributes associated with this tile.
-    fn attributes<T: TileAttribute>(&self) -> HashSet<T>;
+    fn attributes(&self) -> &HashSet<Box<dyn TileAttribute>>;
+}
+
+clone_trait_object!(Tile);
+
+impl Eq for dyn Tile {}
+
+impl Hash for dyn Tile {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.dyn_hash(state)
+    }
+}
+
+impl PartialEq<dyn Tile> for dyn Tile {
+    fn eq(&self, other: &dyn Tile) -> bool {
+        self.as_dyn_eq() == other.as_dyn_eq()
+    }
+}
+
+impl PartialOrd<dyn Tile> for dyn Tile {
+    fn partial_cmp(&self, other: &dyn Tile) -> Option<std::cmp::Ordering> {
+        self.as_dyn_ord().partial_cmp(other.as_dyn_ord())
+    }
 }
 
 /// A tile attribute represents a modifier that is applied to the value of a [`Piece`] placed on a
 /// [`Tile`] or nearby tiles to increase or decrease the final point score or affect gameplay.
-pub trait TileAttribute {
+pub trait TileAttribute: Debug + DynClone {
     /// Modify the given value based on the rules of this attribute.
     ///
     /// The [`Distance`] is from the [`Tile`] to which this attribute belongs to where the given
@@ -123,23 +184,31 @@ pub trait TileAttribute {
     fn visible(&self) -> bool;
 }
 
+clone_trait_object!(TileAttribute);
+
 /// A tile set is a collection of [`Tile`] belonging to a [`Board`].
-pub trait TileSet {
+pub trait TileSet: Debug + DynClone {
     /// Remove all [`Tile`] from this set.
     fn clear(&mut self);
 
     /// Retrieve the [`Tile`] at the given [`Location`]. If no such tile exists, one will be
     /// created.
-    fn tile<T: Tile>(&mut self, location: &Location) -> &T;
+    fn tile(&mut self, location: &Location) -> &dyn Tile;
 
     /// Retrieve the subset of [`Tile`] which are occupied by a [`Piece`].
-    fn occupied_tiles<T: Tile>(&self) -> HashSet<&T>;
+    fn occupied_tiles(&self) -> &HashSet<Box<dyn Tile>>;
 
     /// Retrieve all [`TileAttribute`] for the given set of [`Location`].
-    fn attributes<T: TileAttribute>(
+    fn attributes(
         &self,
         locations: &HashSet<Location>,
-    ) -> HashMap<Location, Vec<T>>;
+    ) -> &HashMap<Location, Vec<Box<dyn TileAttribute>>>;
+}
+
+clone_trait_object!(TileSet);
+
+pub enum ErrorKind {
+    InvalidPlacement,
 }
 
 pub struct Error {
@@ -147,6 +216,45 @@ pub struct Error {
     pub message: String,
 }
 
-pub enum ErrorKind {
-    InvalidPlacement,
+#[derive(Clone, Debug, Eq, Hash)]
+pub struct PlacementImpl {
+    start_location: Location,
+    orientation: Box<dyn Orientation>,
+    pieces: Vec<Box<dyn Piece>>,
+}
+
+impl PlacementImpl {
+    pub fn new(
+        start_location: Location,
+        orientation: Box<dyn Orientation>,
+        pieces: Vec<Box<dyn Piece>>,
+    ) -> PlacementImpl {
+        PlacementImpl {
+            start_location,
+            orientation,
+            pieces,
+        }
+    }
+}
+
+impl PartialEq for PlacementImpl {
+    fn eq(&self, other: &Self) -> bool {
+        (&self.start_location).eq(&other.start_location)
+            && (&self.orientation).eq(&other.orientation)
+            && (&self.pieces).eq(&other.pieces)
+    }
+}
+
+impl Placement for PlacementImpl {
+    fn start_location(&self) -> &Location {
+        &self.start_location
+    }
+
+    fn orientation(&self) -> &dyn Orientation {
+        &*self.orientation
+    }
+
+    fn pieces(&self) -> &Vec<Box<dyn Piece>> {
+        &self.pieces
+    }
 }
