@@ -14,12 +14,30 @@
  * limitations under the License.
  */
 
-use std::fmt::Display;
+use std::{fmt::{Debug, Display}, hash::{Hash, Hasher}};
+
+use dyn_clone::{clone_trait_object, DynClone};
 
 use crate::rust::{DynEq, DynHash};
 
 /// A letter represents a single character that, when put together with other letters, creates a word that can be used in a placement.
-pub trait Letter: Display + DynEq + DynHash {
+pub trait Letter: Debug + Display + DynClone + DynEq + DynHash {
     /// Retrieve the character that represents this letter.
     fn character(&self) -> char;
+}
+
+clone_trait_object!(Letter);
+
+impl Eq for dyn Letter {}
+
+impl Hash for dyn Letter {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.dyn_hash(state)
+    }
+}
+
+impl PartialEq<dyn Letter> for dyn Letter {
+    fn eq(&self, other: &dyn Letter) -> bool {
+        self.as_dyn_eq() == other.as_dyn_eq()
+    }
 }

@@ -62,10 +62,10 @@ clone_trait_object!(Board);
 /// and a wildcard status.
 pub trait Piece: Debug + DynClone + DynEq + DynHash {
     /// Set the [`Letter`] that this piece represents.
-    fn set_letter(&mut self, letter: dyn Letter);
+    fn set_letter(&mut self, letter: Option<Box<dyn Letter>>);
 
     /// Retrieve the [`Letter`] that this piece represents.
-    fn letter(&self) -> &dyn Letter;
+    fn letter(&self) -> &Option<Box<dyn Letter>>;
 
     /// Retrieve the base value of this piece when used in a placement.
     fn value(&self) -> i32;
@@ -87,7 +87,27 @@ impl Hash for dyn Piece {
 
 impl PartialEq<dyn Piece> for dyn Piece {
     fn eq(&self, other: &dyn Piece) -> bool {
-        self.as_dyn_eq() == other.as_dyn_eq()
+        if self.wild() != other.wild() {
+            return false;
+        }
+
+        /*
+         * If both pieces are wild, they are the same. The letter should not be compared
+         * in this case.
+         */
+        if self.wild() {
+            return true;
+        }
+
+        if self.letter().is_none() {
+            if !other.letter().is_none() {
+                return false;
+            }
+        } else if self.letter().as_ref() != other.letter().as_ref() {
+            return false;
+        }
+
+        return true;
     }
 }
 
