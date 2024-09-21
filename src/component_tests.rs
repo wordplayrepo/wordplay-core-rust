@@ -24,6 +24,23 @@ use crate::{
     space::{Location, Orientations},
 };
 
+#[rstest]
+#[case(new_piece(Option::None, 0, true), new_piece(Option::None, 0, true), true)]
+#[case(new_piece(Option::None, 0, true), new_piece(Option::None, 1, true), true)]
+#[case(new_piece(Option::None, 0, true), new_piece(Option::Some('A'), 0, true), true)]
+#[case(new_piece(Option::None, 0, true), new_piece(Option::Some('A'), 1, false), false)]
+#[case(new_piece(Option::Some('A'), 1, false), new_piece(Option::Some('A'), 1, false), true)]
+#[case(new_piece(Option::Some('A'), 1, false), new_piece(Option::Some('A'), 2, false), true)]
+#[case(new_piece(Option::Some('A'), 1, false), new_piece(Option::None, 1, false), false)]
+#[case(new_piece(Option::Some('A'), 1, false), new_piece(Option::Some('B'), 1, false), false)]
+fn piece_eq(#[case] lhs: Box<dyn Piece>, #[case] rhs: Box<dyn Piece>, #[case] expected: bool) {
+    // when
+    let result = lhs.eq(&rhs);
+
+    // then
+    assert_eq!(result, expected);
+}
+
 #[test]
 fn placement_impl_new() {
     // given
@@ -56,8 +73,6 @@ fn placement_impl_eq(
     // then
     assert_eq!(result, expected);
 }
-
-// TODO test Piece equality
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct TestLetter {
