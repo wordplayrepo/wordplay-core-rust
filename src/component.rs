@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+use multiset::HashMultiSet;
+use rand::{Rng, RngCore};
 use std::{
     collections::{HashMap, HashSet},
-    fmt::Debug,
+    fmt::{self, Debug},
     hash::{Hash, Hasher},
 };
 
@@ -28,6 +30,36 @@ use crate::{
     rust::{DynEq, DynHash, DynOrd},
     space::{Dimension, Distance, Location, Orientation},
 };
+
+/// A bag represents the collection of pieces that are neither on the board nor in a player's rack.
+pub trait Bag: Debug {
+    /// Determine whether or not this bag is empty.
+    fn is_empty(&self) -> bool;
+
+    /// Retrieve the current count of pieces in this bag.
+    fn count(&self) -> u32;
+
+    /// Retrieve a random piece from this bag.
+    ///
+    /// Returns [`ErrorKind::NotEnoughPieces`] if the bag is empty.
+    fn random_piece(&mut self) -> Result<Box<dyn Piece>, Error>;
+
+    /// Retrieve a piece from this bag that contains the given letter.
+    ///
+    /// Returns [`ErrorKind::NoSuchPiece`] if no matching piece exists in this bag.
+    fn piece(&mut self, letter: &dyn Letter) -> Result<Box<dyn Piece>, Error>;
+
+    /// Add the given collection of pieces to this bag and select a number of random pieces equal to the count of the pieces deposited.
+    ///
+    /// Returns [`ErrorKind::NotEnoughPieces`] if more pieces are given than exist in the bag.
+    fn exchange(&mut self, pieces: Vec<Box<dyn Piece>>) -> Result<Vec<Box<dyn Piece>>, Error>;
+
+    /// Return the given piece to this bag.
+    fn return_piece(&mut self, piece: Box<dyn Piece>);
+
+    /// Return the given pieces to this bag.
+    fn return_pieces(&mut self, pieces: Vec<Box<dyn Piece>>);
+}
 
 /// A board represents the playing area for a game. It consists of a set of [`Tile`] on which a
 /// [`Placement`] of [`Piece`] can be made. These tiles can also have other attributes that affect
@@ -109,6 +141,12 @@ impl PartialEq<dyn Piece> for dyn Piece {
 
         return true;
     }
+}
+
+/// Generator of [`Piece`] instances.
+pub trait PieceFactory: Debug {
+    /// Create a new piece representing the given letter.
+    fn create_piece(&self, letter: dyn Letter) -> dyn Piece;
 }
 
 /// A placement is a specific grouping of pieces with a location and orientation.
@@ -229,11 +267,113 @@ clone_trait_object!(TileSet);
 
 pub enum ErrorKind {
     InvalidPlacement,
+    NoSuchPiece,
+    NotEnoughPieces,
 }
 
 pub struct Error {
     pub kind: ErrorKind,
     pub message: String,
+}
+
+impl Error {
+    fn new<S: AsRef<str>>(kind: ErrorKind, message: S) -> Error {
+        Error {
+            kind,
+            message: message.as_ref().to_string(),
+        }
+    }
+}
+
+pub struct BagImpl {
+    letters: HashMultiSet<Box<dyn Letter>>,
+    piece_factory: Box<dyn PieceFactory>,
+    random: Box<dyn RngCore>,
+}
+
+impl fmt::Debug for BagImpl {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        #[derive(Debug)]
+        struct BagImpl<'a> {
+            letters: &'a HashMultiSet<Box<dyn Letter>>,
+            piece_factory: &'a Box<dyn PieceFactory>,
+        }
+
+        let Self {
+            letters,
+            piece_factory,
+            random: _,
+        } = self;
+
+        fmt::Debug::fmt(
+            &BagImpl {
+                letters,
+                piece_factory,
+            },
+            f,
+        )
+    }
+}
+
+impl Bag for BagImpl {
+    fn is_empty(&self) -> bool {
+        self.letters.is_empty()
+    }
+
+    fn count(&self) -> u32 {
+        self.letters
+            .len()
+            .try_into()
+            .expect("type conversion failed for Bag count")
+    }
+
+    fn random_piece(&mut self) -> Result<Box<dyn Piece>, Error> {
+        if self.is_empty() {
+            return Result::Err(Error::new(
+                ErrorKind::NotEnoughPieces,
+                "Cannot retrieve a piece from an empty bag",
+            ));
+        }
+
+        let count = self.count();
+        let letter_index: usize = self
+            .random
+            .gen_range(0..count)
+            .try_into()
+            .expect("type conversion failed for letter index");
+
+        let mut all_letters: Vec<Box<dyn Letter>> = Vec::new();
+        all_letters.extend(self.letters.iter().cloned());
+        let letter: &Box<dyn Letter> = all_letters.get(letter_index).expect("letter lookup failed");
+
+        self.letters.remove(letter);
+
+        Result::Ok(Box::new(self.piece_factory.create_piece(*letter)))
+    }
+
+    fn piece(&mut self, letter: &dyn Letter) -> Result<Box<dyn Piece>, Error> {
+        // TODO
+        Result::Err(Error::new(
+            ErrorKind::NoSuchPiece,
+            format!("The letter \"{letter}\" is not in this bag"),
+        ))
+    }
+
+    fn exchange(&mut self, pieces: Vec<Box<dyn Piece>>) -> Result<Vec<Box<dyn Piece>>, Error> {
+        // TODO
+        Result::Err(Error::new(
+            ErrorKind::NotEnoughPieces,
+            "Not enough pieces in the bag to exchange",
+        ))
+    }
+
+    fn return_piece(&mut self, piece: Box<dyn Piece>) {
+        // TODO
+    }
+
+    fn return_pieces(&mut self, pieces: Vec<Box<dyn Piece>>) {
+        // TODO
+    }
 }
 
 #[derive(Clone, Debug, Eq, Hash)]

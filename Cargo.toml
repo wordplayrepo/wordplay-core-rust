@@ -21,6 +21,8 @@ edition = "2021"
 [dependencies]
 dyn-clone = "1.0.17"
 indexmap = "2.4.0"
+multiset = "0.0.5"
+rand = "0.8.5"
 
 [dev-dependencies]
 rstest = "0.22.0"
