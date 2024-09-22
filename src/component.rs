@@ -47,7 +47,7 @@ pub trait Bag: Debug {
     /// Retrieve a piece from this bag that contains the given letter.
     ///
     /// Returns [`ErrorKind::NoSuchPiece`] if no matching piece exists in this bag.
-    fn piece(&mut self, letter: &dyn Letter) -> Result<Box<dyn Piece>, Error>;
+    fn piece(&mut self, letter: &Box<dyn Letter>) -> Result<Box<dyn Piece>, Error>;
 
     /// Add the given collection of pieces to this bag and select a number of random pieces equal to the count of the pieces deposited.
     ///
@@ -146,7 +146,7 @@ impl PartialEq<dyn Piece> for dyn Piece {
 /// Generator of [`Piece`] instances.
 pub trait PieceFactory: Debug {
     /// Create a new piece representing the given letter.
-    fn create_piece(&self, letter: dyn Letter) -> dyn Piece;
+    fn create_piece(&self, letter: &Box<dyn Letter>) -> Box<dyn Piece>;
 }
 
 /// A placement is a specific grouping of pieces with a location and orientation.
@@ -335,7 +335,7 @@ impl Bag for BagImpl {
             ));
         }
 
-        let count = self.count();
+        let count: u32 = self.count();
         let letter_index: usize = self
             .random
             .gen_range(0..count)
@@ -344,19 +344,26 @@ impl Bag for BagImpl {
 
         let mut all_letters: Vec<Box<dyn Letter>> = Vec::new();
         all_letters.extend(self.letters.iter().cloned());
-        let letter: &Box<dyn Letter> = all_letters.get(letter_index).expect("letter lookup failed");
+        let letter: &Box<dyn Letter> = all_letters
+            .get(letter_index)
+            .expect("failed to find letter");
+
+        self.letters.remove(&letter);
+
+        Result::Ok(self.piece_factory.create_piece(letter))
+    }
+
+    fn piece(&mut self, letter: &Box<dyn Letter>) -> Result<Box<dyn Piece>, Error> {
+        if !self.letters.contains(letter) {
+            return Result::Err(Error::new(
+                ErrorKind::NoSuchPiece,
+                format!("The letter \"{letter}\" is not in this bag"),
+            ));
+        }
 
         self.letters.remove(letter);
 
-        Result::Ok(Box::new(self.piece_factory.create_piece(*letter)))
-    }
-
-    fn piece(&mut self, letter: &dyn Letter) -> Result<Box<dyn Piece>, Error> {
-        // TODO
-        Result::Err(Error::new(
-            ErrorKind::NoSuchPiece,
-            format!("The letter \"{letter}\" is not in this bag"),
-        ))
+        Result::Ok(self.piece_factory.create_piece(letter))
     }
 
     fn exchange(&mut self, pieces: Vec<Box<dyn Piece>>) -> Result<Vec<Box<dyn Piece>>, Error> {
