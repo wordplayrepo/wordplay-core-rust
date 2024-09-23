@@ -16,23 +16,86 @@
 
 use std::fmt::{Display, Formatter, Result};
 
+use multiset::HashMultiSet;
 use rstest::rstest;
 
 use crate::{
-    component::{Piece, Placement, PlacementImpl},
+    component::{Bag, BagImpl, Piece, PieceFactory, Placement, PlacementImpl},
     lang::Letter,
     space::{Location, Orientations},
 };
 
+#[test]
+fn bag_impl_is_empty_no_letters() {
+    // given
+    let letters = HashMultiSet::new();
+    let piece_factory = Box::new(TestPieceFactory {});
+
+    // when
+    let result = BagImpl::new(letters, piece_factory);
+
+    // then
+    assert_eq!(result.is_empty(), true)
+}
+
+#[test]
+fn bag_impl_is_empty_with_letters() {
+    // given
+    let mut letters: HashMultiSet<Option<Box<dyn Letter>>> = HashMultiSet::new();
+    letters.insert(Some(Box::new(TestLetter::A)));
+
+    let piece_factory = Box::new(TestPieceFactory {});
+
+    // when
+    let result = BagImpl::new(letters, piece_factory);
+
+    // then
+    assert_eq!(result.is_empty(), false)
+}
+
+// TODO finish unit tests
+
 #[rstest]
-#[case(new_piece(Option::None, 0, true), new_piece(Option::None, 0, true), true)]
-#[case(new_piece(Option::None, 0, true), new_piece(Option::None, 1, true), true)]
-#[case(new_piece(Option::None, 0, true), new_piece(Option::Some('A'), 0, true), true)]
-#[case(new_piece(Option::None, 0, true), new_piece(Option::Some('A'), 1, false), false)]
-#[case(new_piece(Option::Some('A'), 1, false), new_piece(Option::Some('A'), 1, false), true)]
-#[case(new_piece(Option::Some('A'), 1, false), new_piece(Option::Some('A'), 2, false), true)]
-#[case(new_piece(Option::Some('A'), 1, false), new_piece(Option::None, 1, false), false)]
-#[case(new_piece(Option::Some('A'), 1, false), new_piece(Option::Some('B'), 1, false), false)]
+#[case(
+    new_piece(Option::None, 0, true),
+    new_piece(Option::None, 0, true),
+    true
+)]
+#[case(
+    new_piece(Option::None, 0, true),
+    new_piece(Option::None, 1, true),
+    true
+)]
+#[case(
+    new_piece(Option::None, 0, true),
+    new_piece(Option::Some(TestLetter::A), 0, true),
+    true
+)]
+#[case(
+    new_piece(Option::None, 0, true),
+    new_piece(Option::Some(TestLetter::A), 1, false),
+    false
+)]
+#[case(
+    new_piece(Option::Some(TestLetter::A), 1, false),
+    new_piece(Option::Some(TestLetter::A), 1, false),
+    true
+)]
+#[case(
+    new_piece(Option::Some(TestLetter::A), 1, false),
+    new_piece(Option::Some(TestLetter::A), 2, false),
+    true
+)]
+#[case(
+    new_piece(Option::Some(TestLetter::A), 1, false),
+    new_piece(Option::None, 1, false),
+    false
+)]
+#[case(
+    new_piece(Option::Some(TestLetter::A), 1, false),
+    new_piece(Option::Some(TestLetter::B), 1, false),
+    false
+)]
 fn piece_eq(#[case] lhs: Box<dyn Piece>, #[case] rhs: Box<dyn Piece>, #[case] expected: bool) {
     // when
     let result = lhs.eq(&rhs);
@@ -46,7 +109,7 @@ fn placement_impl_new() {
     // given
     let start_location = Location::at((0, 0, 0));
     let orientation = Orientations::x();
-    let pieces: Vec<Box<dyn Piece>> = vec![new_piece(Option::Some('A'), 1, false)];
+    let pieces: Vec<Box<dyn Piece>> = vec![new_piece(Option::Some(TestLetter::A), 1, false)];
 
     // when
     let result = PlacementImpl::new(start_location, orientation.clone(), pieces.clone());
@@ -61,7 +124,7 @@ fn placement_impl_new() {
 #[case(PlacementImpl::new(Location::at((1, 1, 1)), Orientations::x(), vec![]), PlacementImpl::new(Location::at((1, 1, 1)), Orientations::x(), vec![]), true)]
 #[case(PlacementImpl::new(Location::at((1, 1, 1)), Orientations::x(), vec![]), PlacementImpl::new(Location::at((2, 2, 2)), Orientations::x(), vec![]), false)]
 #[case(PlacementImpl::new(Location::at((1, 1, 1)), Orientations::x(), vec![]), PlacementImpl::new(Location::at((1, 1, 1)), Orientations::y(), vec![]), false)]
-#[case(PlacementImpl::new(Location::at((1, 1, 1)), Orientations::x(), vec![]), PlacementImpl::new(Location::at((1, 1, 1)), Orientations::x(), vec![new_piece(Option::Some('A'), 1, false)]), false)]
+#[case(PlacementImpl::new(Location::at((1, 1, 1)), Orientations::x(), vec![]), PlacementImpl::new(Location::at((1, 1, 1)), Orientations::x(), vec![new_piece(Option::Some(TestLetter::A), 1, false)]), false)]
 fn placement_impl_eq(
     #[case] lhs: PlacementImpl,
     #[case] rhs: PlacementImpl,
@@ -75,17 +138,18 @@ fn placement_impl_eq(
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-struct TestLetter {
-    character: char,
+enum TestLetter {
+    A,
+    B,
 }
 impl Letter for TestLetter {
     fn character(&self) -> char {
-        self.character
+        self.to_string().chars().next().unwrap()
     }
 }
 impl Display for TestLetter {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "{}", self.character)
+        write!(f, "{}", self)
     }
 }
 
@@ -113,12 +177,22 @@ impl Piece for TestPiece {
     }
 }
 
-fn new_piece(character: Option<char>, value: i32, wild: bool) -> Box<TestPiece> {
+#[derive(Debug)]
+struct TestPieceFactory {}
+impl PieceFactory for TestPieceFactory {
+    fn create_piece(&self, letter: Option<Box<dyn Letter>>) -> Box<dyn Piece> {
+        let wild = letter.is_none();
+        Box::new(TestPiece {
+            letter: letter.map(|l| l as Box<dyn Letter>).or(None),
+            value: 1,
+            wild,
+        })
+    }
+}
+
+fn new_piece(letter: Option<TestLetter>, value: i32, wild: bool) -> Box<TestPiece> {
     Box::new(TestPiece {
-        letter: character.map_or_else(
-            || Option::None,
-            |c| Option::Some(Box::new(TestLetter { character: c }) as Box<dyn Letter>),
-        ),
+        letter: letter.map(|l| Box::new(l) as Box<dyn Letter>).or(None),
         value,
         wild,
     })

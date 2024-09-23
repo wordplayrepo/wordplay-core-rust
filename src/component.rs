@@ -37,7 +37,7 @@ pub trait Bag: Debug {
     fn is_empty(&self) -> bool;
 
     /// Retrieve the current count of pieces in this bag.
-    fn count(&self) -> u32;
+    fn count(&self) -> usize;
 
     /// Retrieve a random piece from this bag.
     ///
@@ -47,7 +47,7 @@ pub trait Bag: Debug {
     /// Retrieve a piece from this bag that contains the given letter.
     ///
     /// Returns [`ErrorKind::NoSuchPiece`] if no matching piece exists in this bag.
-    fn piece(&mut self, letter: Box<dyn Letter>) -> Result<Box<dyn Piece>, Error>;
+    fn piece(&mut self, letter: Option<Box<dyn Letter>>) -> Result<Box<dyn Piece>, Error>;
 
     /// Add the given collection of pieces to this bag and select a number of random pieces equal to the count of the pieces deposited.
     ///
@@ -146,7 +146,7 @@ impl PartialEq<dyn Piece> for dyn Piece {
 /// Generator of [`Piece`] instances.
 pub trait PieceFactory: Debug {
     /// Create a new piece representing the given letter.
-    fn create_piece(&self, letter: Box<dyn Letter>) -> Box<dyn Piece>;
+    fn create_piece(&self, letter: Option<Box<dyn Letter>>) -> Box<dyn Piece>;
 }
 
 /// A placement is a specific grouping of pieces with a location and orientation.
@@ -265,12 +265,14 @@ pub trait TileSet: Debug + DynClone {
 
 clone_trait_object!(TileSet);
 
+#[derive(Debug)]
 pub enum ErrorKind {
     InvalidPlacement,
     NoSuchPiece,
     NotEnoughPieces,
 }
 
+#[derive(Debug)]
 pub struct Error {
     pub kind: ErrorKind,
     pub message: String,
@@ -286,7 +288,7 @@ impl Error {
 }
 
 pub struct BagImpl {
-    letters: HashMultiSet<Box<dyn Letter>>,
+    letters: HashMultiSet<Option<Box<dyn Letter>>>,
     piece_factory: Box<dyn PieceFactory>,
     random: Box<dyn RngCore>,
 }
@@ -295,7 +297,7 @@ impl fmt::Debug for BagImpl {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         #[derive(Debug)]
         struct BagImpl<'a> {
-            letters: &'a HashMultiSet<Box<dyn Letter>>,
+            letters: &'a HashMultiSet<Option<Box<dyn Letter>>>,
             piece_factory: &'a Box<dyn PieceFactory>,
         }
 
@@ -315,12 +317,25 @@ impl fmt::Debug for BagImpl {
     }
 }
 
+impl BagImpl {
+    pub fn new(
+        letters: HashMultiSet<Option<Box<dyn Letter>>>,
+        piece_factory: Box<dyn PieceFactory>,
+    ) -> BagImpl {
+        BagImpl {
+            letters,
+            piece_factory,
+            random: Box::new(rand::thread_rng()),
+        }
+    }
+}
+
 impl Bag for BagImpl {
     fn is_empty(&self) -> bool {
         self.letters.is_empty()
     }
 
-    fn count(&self) -> u32 {
+    fn count(&self) -> usize {
         self.letters
             .len()
             .try_into()
@@ -335,27 +350,23 @@ impl Bag for BagImpl {
             ));
         }
 
-        let count: u32 = self.count();
-        let letter_index: usize = self
-            .random
-            .gen_range(0..count)
-            .try_into()
-            .expect("type conversion failed for letter index");
+        let count: usize = self.count();
+        let letter_index: usize = self.random.gen_range(0..count);
 
-        let mut all_letters: Vec<Box<dyn Letter>> = Vec::new();
+        let mut all_letters: Vec<Option<Box<dyn Letter>>> = Vec::new();
         all_letters.extend(self.letters.iter().cloned());
-        let letter: Box<dyn Letter> = all_letters.swap_remove(letter_index);
+        let letter: Option<Box<dyn Letter>> = all_letters.swap_remove(letter_index);
 
         self.letters.remove(&letter);
 
         Result::Ok(self.piece_factory.create_piece(letter))
     }
 
-    fn piece(&mut self, letter: Box<dyn Letter>) -> Result<Box<dyn Piece>, Error> {
+    fn piece(&mut self, letter: Option<Box<dyn Letter>>) -> Result<Box<dyn Piece>, Error> {
         if !self.letters.contains(&letter) {
             return Result::Err(Error::new(
                 ErrorKind::NoSuchPiece,
-                format!("The letter \"{letter}\" is not in this bag"),
+                format!("The letter \"{letter:?}\" is not in this bag"),
             ));
         }
 
@@ -365,19 +376,32 @@ impl Bag for BagImpl {
     }
 
     fn exchange(&mut self, pieces: Vec<Box<dyn Piece>>) -> Result<Vec<Box<dyn Piece>>, Error> {
-        // TODO
-        Result::Err(Error::new(
-            ErrorKind::NotEnoughPieces,
-            "Not enough pieces in the bag to exchange",
-        ))
+        let incoming_count: usize = pieces.len();
+
+        let bag_count: usize = self.count();
+        if bag_count < incoming_count {
+            return Result::Err(Error::new(
+                ErrorKind::NotEnoughPieces,
+                "Not enough pieces in the bag to exchange",
+            ));
+        }
+
+        let mut new_pieces: Vec<Box<dyn Piece>> = Vec::new();
+        for _ in 0..incoming_count {
+            new_pieces.push(self.random_piece().unwrap()); // checked above for preconditions
+        }
+
+        Result::Ok(new_pieces)
     }
 
     fn return_piece(&mut self, piece: Box<dyn Piece>) {
-        // TODO
+        self.letters.insert(piece.letter().clone());
     }
 
     fn return_pieces(&mut self, pieces: Vec<Box<dyn Piece>>) {
-        // TODO
+        for piece in pieces.into_iter() {
+            self.return_piece(piece);
+        }
     }
 }
 
