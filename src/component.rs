@@ -47,7 +47,7 @@ pub trait Bag: Debug {
     /// Retrieve a piece from this bag that contains the given letter.
     ///
     /// Returns [`ErrorKind::NoSuchPiece`] if no matching piece exists in this bag.
-    fn piece(&mut self, letter: Box<&'static dyn Letter>) -> Result<Box<dyn Piece>, Error>;
+    fn piece(&mut self, letter: Box<dyn Letter>) -> Result<Box<dyn Piece>, Error>;
 
     /// Add the given collection of pieces to this bag and select a number of random pieces equal to the count of the pieces deposited.
     ///
@@ -146,7 +146,7 @@ impl PartialEq<dyn Piece> for dyn Piece {
 /// Generator of [`Piece`] instances.
 pub trait PieceFactory: Debug {
     /// Create a new piece representing the given letter.
-    fn create_piece(&self, letter: Box<&'static dyn Letter>) -> Box<dyn Piece>;
+    fn create_piece(&self, letter: Box<dyn Letter>) -> Box<dyn Piece>;
 }
 
 /// A placement is a specific grouping of pieces with a location and orientation.
@@ -286,7 +286,7 @@ impl Error {
 }
 
 pub struct BagImpl {
-    letters: HashMultiSet<Box<&'static dyn Letter>>,
+    letters: HashMultiSet<Box<dyn Letter>>,
     piece_factory: Box<dyn PieceFactory>,
     random: Box<dyn RngCore>,
 }
@@ -295,7 +295,7 @@ impl fmt::Debug for BagImpl {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         #[derive(Debug)]
         struct BagImpl<'a> {
-            letters: &'a HashMultiSet<Box<&'static dyn Letter>>,
+            letters: &'a HashMultiSet<Box<dyn Letter>>,
             piece_factory: &'a Box<dyn PieceFactory>,
         }
 
@@ -342,16 +342,16 @@ impl Bag for BagImpl {
             .try_into()
             .expect("type conversion failed for letter index");
 
-        let mut all_letters: Vec<Box<&'static dyn Letter>> = Vec::new();
+        let mut all_letters: Vec<Box<dyn Letter>> = Vec::new();
         all_letters.extend(self.letters.iter().cloned());
-        let letter: Box<&'static dyn Letter> = all_letters.swap_remove(letter_index);
+        let letter: Box<dyn Letter> = all_letters.swap_remove(letter_index);
 
         self.letters.remove(&letter);
 
         Result::Ok(self.piece_factory.create_piece(letter))
     }
 
-    fn piece(&mut self, letter: Box<&'static dyn Letter>) -> Result<Box<dyn Piece>, Error> {
+    fn piece(&mut self, letter: Box<dyn Letter>) -> Result<Box<dyn Piece>, Error> {
         if !self.letters.contains(&letter) {
             return Result::Err(Error::new(
                 ErrorKind::NoSuchPiece,
