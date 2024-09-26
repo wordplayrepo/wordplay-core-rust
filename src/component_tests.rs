@@ -20,37 +20,80 @@ use multiset::HashMultiSet;
 use rstest::rstest;
 
 use crate::{
-    component::{Bag, BagImpl, Piece, PieceFactory, Placement, PlacementImpl},
+    component::{Bag, BagImpl, ErrorKind, Piece, PieceFactory, Placement, PlacementImpl},
     lang::Letter,
     space::{Location, Orientations},
 };
 
+#[rstest]
+#[case(vec![], true)]
+#[case(vec![None], false)]
+fn bag_impl_is_empty(
+    #[case] input_letters: Vec<Option<Box<dyn Letter>>>,
+    #[case] empty: bool,
+) {
+    // given
+    let letters = HashMultiSet::from_iter(input_letters.into_iter());
+    let piece_factory = Box::new(TestPieceFactory {});
+
+    // when
+    let result = BagImpl::new(letters, piece_factory).is_empty();
+
+    // then
+    assert_eq!(result, empty)
+}
+
+#[rstest]
+#[case(vec![], 0)]
+#[case(vec![None], 1)]
+#[case(vec![Some(Box::new(TestLetter::A)as Box<dyn Letter>)], 1)]
+#[case(vec![None, Some(Box::new(TestLetter::A)as Box<dyn Letter>)], 2)]
+#[case(vec![Some(Box::new(TestLetter::A)as Box<dyn Letter>), Some(Box::new(TestLetter::B)as Box<dyn Letter>)], 2)]
+#[case(vec![Some(Box::new(TestLetter::A)as Box<dyn Letter>), Some(Box::new(TestLetter::A)as Box<dyn Letter>), Some(Box::new(TestLetter::B)as Box<dyn Letter>), Some(Box::new(TestLetter::B)as Box<dyn Letter>), Some(Box::new(TestLetter::B)as Box<dyn Letter>)], 5)]
+fn bag_impl_count(
+    #[case] input_letters: Vec<Option<Box<dyn Letter>>>,
+    #[case] count: usize,
+) {
+    // given
+    let letters = HashMultiSet::from_iter(input_letters.into_iter());
+    let piece_factory = Box::new(TestPieceFactory {});
+
+    // when
+    let result = BagImpl::new(letters, piece_factory).count();
+
+    // then
+    assert_eq!(result, count)
+}
+
 #[test]
-fn bag_impl_is_empty_no_letters() {
+fn bag_impl_random_piece_empty() {
     // given
     let letters = HashMultiSet::new();
     let piece_factory = Box::new(TestPieceFactory {});
 
     // when
-    let result = BagImpl::new(letters, piece_factory);
+    let result = BagImpl::new(letters, piece_factory).random_piece();
 
     // then
-    assert_eq!(result.is_empty(), true)
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err().kind, ErrorKind::NotEnoughPieces);
 }
 
 #[test]
-fn bag_impl_is_empty_with_letters() {
+fn bag_impl_random_piece_not_empty() {
     // given
-    let mut letters: HashMultiSet<Option<Box<dyn Letter>>> = HashMultiSet::new();
-    letters.insert(Some(Box::new(TestLetter::A)));
+    let letter = Some(Box::new(TestLetter::A) as Box<dyn Letter>);
 
+    let mut letters = HashMultiSet::new();
+    letters.insert(letter.clone());
     let piece_factory = Box::new(TestPieceFactory {});
 
     // when
-    let result = BagImpl::new(letters, piece_factory);
+    let result = BagImpl::new(letters, piece_factory).random_piece();
 
     // then
-    assert_eq!(result.is_empty(), false)
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().letter(), &letter);
 }
 
 // TODO finish unit tests

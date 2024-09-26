@@ -265,14 +265,14 @@ pub trait TileSet: Debug + DynClone {
 
 clone_trait_object!(TileSet);
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ErrorKind {
     InvalidPlacement,
     NoSuchPiece,
     NotEnoughPieces,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Error {
     pub kind: ErrorKind,
     pub message: String,
